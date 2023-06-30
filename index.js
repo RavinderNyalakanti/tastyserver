@@ -4,6 +4,8 @@ const sqlite3 = require('sqlite3')
 const cors = require('cors')
 const path = require("path");
 const bodyparser = require('body-parser')
+const axios = require('axios');
+
 
 const app = express();
 app.use(cors())
@@ -20,7 +22,7 @@ const inserttable = async () => {
     // await db.run(`insert into users (username, password) values ('vamshi','12345678')`)
     await db.run(`DELETE FROM users WHERE id = 6`);
     const res = await db.all('select * from users')
-    console.log(res)
+    
 }
 
 let db = null;
@@ -50,14 +52,14 @@ initializeDBAndServer();
 
 app.post('/login', async (req, res) => {
     const { username, password } = req.body
-    console.log(req.body)
+    
     const query = `select * from users where username='${username}'`
     const response = await db.get(query)
-    console.log(response)
+
     if (response === undefined) {
         res.status(404)
         res.send({'error_msg':'user not found'})
-        console.log('not found')
+       
     } else {
         if (password === response.password) {
             const userDetails = {
@@ -68,11 +70,13 @@ app.post('/login', async (req, res) => {
                 method: "POST",
                 body: JSON.stringify(userDetails),
               };
-            const getdata = await fetch('https://apis.ccbp.in/login',options)
-            const data=await getdata.json();
+
+              const getdata = await axios.post('https://apis.ccbp.in/login', userDetails);
+const data = getdata.data;
+            
             res.status(200)
             res.send({'jwt_token':`${data.jwt_token}`})
-            console.log(data.jwt_token)
+            
         } else {
             res.status(401)
             res.send({error_msg:'password incorrect'})
@@ -99,6 +103,6 @@ app.post('/register', async (req, res) => {
 app.get('/', async (req, res) => {
     const response = await db.all(`select * from users`)
     res.send(response)
-    console.log(response)
+    
 })
 
